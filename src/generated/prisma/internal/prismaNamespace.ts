@@ -389,6 +389,7 @@ export const ModelName = {
   Owner: 'Owner',
   Employee: 'Employee',
   Shop: 'Shop',
+  ShopStock: 'ShopStock',
   Warehouse: 'Warehouse',
   WarehouseStock: 'WarehouseStock',
   Category: 'Category',
@@ -427,7 +428,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "admin" | "owner" | "employee" | "shop" | "warehouse" | "warehouseStock" | "category" | "subcategory" | "product" | "productVariant" | "inventory" | "supplier" | "customer" | "purchase" | "purchaseItem" | "sale" | "saleItem" | "discount" | "expense" | "damageProduct" | "returnProduct" | "stockMovement" | "stockAlert" | "adjustment" | "activeToken" | "tokenBlacklist" | "auditLog"
+    modelProps: "user" | "admin" | "owner" | "employee" | "shop" | "shopStock" | "warehouse" | "warehouseStock" | "category" | "subcategory" | "product" | "productVariant" | "inventory" | "supplier" | "customer" | "purchase" | "purchaseItem" | "sale" | "saleItem" | "discount" | "expense" | "damageProduct" | "returnProduct" | "stockMovement" | "stockAlert" | "adjustment" | "activeToken" | "tokenBlacklist" | "auditLog"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -798,6 +799,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.ShopCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.ShopCountAggregateOutputType> | number
+        }
+      }
+    }
+    ShopStock: {
+      payload: Prisma.$ShopStockPayload<ExtArgs>
+      fields: Prisma.ShopStockFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ShopStockFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShopStockPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ShopStockFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShopStockPayload>
+        }
+        findFirst: {
+          args: Prisma.ShopStockFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShopStockPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ShopStockFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShopStockPayload>
+        }
+        findMany: {
+          args: Prisma.ShopStockFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShopStockPayload>[]
+        }
+        create: {
+          args: Prisma.ShopStockCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShopStockPayload>
+        }
+        createMany: {
+          args: Prisma.ShopStockCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ShopStockCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShopStockPayload>[]
+        }
+        delete: {
+          args: Prisma.ShopStockDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShopStockPayload>
+        }
+        update: {
+          args: Prisma.ShopStockUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShopStockPayload>
+        }
+        deleteMany: {
+          args: Prisma.ShopStockDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ShopStockUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ShopStockUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShopStockPayload>[]
+        }
+        upsert: {
+          args: Prisma.ShopStockUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShopStockPayload>
+        }
+        aggregate: {
+          args: Prisma.ShopStockAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateShopStock>
+        }
+        groupBy: {
+          args: Prisma.ShopStockGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ShopStockGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ShopStockCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ShopStockCountAggregateOutputType> | number
         }
       }
     }
@@ -2652,6 +2727,24 @@ export const ShopScalarFieldEnum = {
 export type ShopScalarFieldEnum = (typeof ShopScalarFieldEnum)[keyof typeof ShopScalarFieldEnum]
 
 
+export const ShopStockScalarFieldEnum = {
+  id: 'id',
+  productId: 'productId',
+  shopId: 'shopId',
+  quantity: 'quantity',
+  reservedQty: 'reservedQty',
+  availableQty: 'availableQty',
+  minStock: 'minStock',
+  maxStock: 'maxStock',
+  reorderPoint: 'reorderPoint',
+  location: 'location',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ShopStockScalarFieldEnum = (typeof ShopStockScalarFieldEnum)[keyof typeof ShopStockScalarFieldEnum]
+
+
 export const WarehouseScalarFieldEnum = {
   id: 'id',
   shopId: 'shopId',
@@ -3769,6 +3862,7 @@ export type GlobalOmitConfig = {
   owner?: Prisma.OwnerOmit
   employee?: Prisma.EmployeeOmit
   shop?: Prisma.ShopOmit
+  shopStock?: Prisma.ShopStockOmit
   warehouse?: Prisma.WarehouseOmit
   warehouseStock?: Prisma.WarehouseStockOmit
   category?: Prisma.CategoryOmit

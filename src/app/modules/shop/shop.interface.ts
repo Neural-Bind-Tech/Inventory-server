@@ -33,3 +33,12 @@ export interface WarehousePayload {
 	managerId?: string;
 	isActive?: boolean;
 }
+
+export type ShopRelationKey =
+	| 'employees'
+	| 'supplier'
+	| 'expense'
+	| 'damageproduct'
+	| 'returnproduct'
+	| 'warehouse'
+	| 'shopstock';

@@ -36,13 +36,6 @@ router.post(
 	shopController.createShopByOwner
 );
 
-router.post(
-	'/warehouse',
-	auth(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.OWNER),
-	validateRequest(shopValidation.createWarehouseSchema),
-	shopController.createWarehouseUnderShop
-);
-
 router.get(
 	'/',
 	auth(UserRole.SUPER_ADMIN, UserRole.ADMIN),
@@ -59,6 +52,12 @@ router.get(
 	'/my-shops',
 	auth(UserRole.OWNER),
 	shopController.getOwnerShops
+);
+
+router.get(
+	'/:id/relations',
+	auth(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.OWNER),
+	shopController.getShopRelationsById
 );
 
 router.get(

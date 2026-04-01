@@ -7,7 +7,8 @@ import { FileUploadHelper } from '../../../helpers/fileUploadHelper';
 import type { JWTPayload } from '../../../interface';
 import type { IUploadFile } from '../../../interface/file';
 import { prisma } from '../../../lib/prisma';
-import { ShopPayload, WarehousePayload } from './shop.interface';
+import { ShopPayload, ShopRelationKey} from './shop.interface';
+
 
 const buildShopCreateData = (
 	payload: ShopPayload,
@@ -152,25 +153,23 @@ const getAllShopsForAdmin = async () => {
 		where: {
 			isDeleted: false,
 		},
-		include: {
-			owner: {
-				select: {
-					userId: true,
-					name: true,
-					email: true,
-					phone: true,
-				},
-			},
-			Warehouse: {
-				select: {
-					id: true,
-					name: true,
-					code: true,
-					address: true,
-					city: true,
-					capacity: true,
-				},
-			},
+		select:{
+			id:true,
+			ownerId:true,
+			name:true,
+			code:true,
+			description:true,
+			address:true,
+			phone:true,
+			email:true,
+			owner:{
+				select:{
+					name:true,
+					email:true,
+					phone:true
+				}
+			}
+
 		},
 		orderBy: {
 			createdAt: 'desc',
@@ -181,6 +180,7 @@ const getAllShopsForAdmin = async () => {
 };
 
 const getShopsByOwnerForAdmin = async (ownerId: string) => {
+	
 	const owner = await prisma.owner.findFirst({
 		where: {
 			isDeleted: false,
@@ -197,26 +197,22 @@ const getShopsByOwnerForAdmin = async (ownerId: string) => {
 			ownerId: owner.userId,
 			isDeleted: false,
 		},
-		include: {
-			owner: {
-				select: {
-					id: true,
-					userId: true,
-					name: true,
-					email: true,
-					phone: true,
-				},
-			},
-			Warehouse: {
-				select: {
-					id: true,
-					name: true,
-					code: true,
-					address: true,
-					city: true,
-					capacity: true,
-				},
-			},
+		select:{
+			id:true,
+			ownerId:true,
+			name:true,
+			code:true,
+			description:true,
+			address:true,
+			phone:true,
+			email:true,
+			owner:{
+				select:{
+					name:true,
+					email:true,
+					phone:true
+				}
+			}
 		},
 		orderBy: {
 			createdAt: 'desc',
@@ -231,28 +227,7 @@ const getShopById = async (id: string, user: JWTPayload) => {
 		where: {
 			id,
 			isDeleted: false,
-		},
-		include: {
-			owner: {
-				select: {
-					id: true,
-					userId: true,
-					name: true,
-					email: true,
-					phone: true,
-				},
-			},
-			Warehouse: {
-				select: {
-					id: true,
-					name: true,
-					code: true,
-					address: true,
-					city: true,
-					capacity: true
-				},
-			},
-		},
+		}
 	});
 
 	if (!shop) {
@@ -264,6 +239,155 @@ const getShopById = async (id: string, user: JWTPayload) => {
 	}
 
 	return shop;
+};
+
+const getShopRelationsById = async (
+	id: string,
+	user: JWTPayload,
+	validRelations?: string[]
+) => {
+	const includes = new Set((validRelations ?? []) as ShopRelationKey[]);
+	
+	const shopSelect: Prisma.ShopSelect = {
+		id: true,
+		ownerId: true,
+		name: true,
+		code: true,
+		status: true,
+	};
+
+	if (includes.has('employees')) {
+		shopSelect.employees = {
+			where: {
+				isDeleted: false,
+			},
+			select: {
+				id: true,
+				userId: true,
+				name: true,
+				email: true,
+				phone: true,
+				employeeCode: true,
+				status: true,
+				joiningDate: true,
+			},
+		};
+	}
+
+	if (includes.has('supplier')) {
+		shopSelect.Supplier = {
+			select: {
+				id: true,
+				name: true,
+				companyName: true,
+				supplierCode: true,
+				email: true,
+				phone: true,
+				status: true,
+				totalOrder: true,
+				rating: true,
+				createdAt: true,
+			},
+		};
+	}
+
+	if (includes.has('expense')) {
+		shopSelect.Expense = {
+			orderBy: {
+				expenseDate: 'desc',
+			},
+			select: {
+				id: true,
+				title: true,
+				category: true,
+				amount: true,
+				paymentMethod: true,
+				expenseDate: true,
+				createdAt: true,
+			},
+		};
+	}
+
+	if (includes.has('damageproduct')) {
+		shopSelect.DamageProduct = {
+			select: {
+				id: true,
+				productId: true,
+				quantity: true,
+				damageType: true,
+				severity: true,
+				status: true,
+				totalLoss: true,
+				damageDate: true,
+				createdAt: true,
+			},
+		};
+	}
+
+	if (includes.has('returnproduct')) {
+		shopSelect.ReturnProduct = {
+			select: {
+				id: true,
+				productId: true,
+				supplierId: true,
+				returnType: true,
+				quantity: true,
+				reason: true,
+				status: true,
+				returnDate: true,
+				createdAt: true,
+			},
+		};
+	}
+
+	if (includes.has('warehouse')) {
+		shopSelect.Warehouse = {
+			select: {
+				id: true,
+				name: true,
+				code: true,
+				city: true,
+				capacity: true,
+				isActive: true,
+				createdAt: true,
+			},
+		};
+	}
+
+	if (includes.has('shopstock')) {
+		shopSelect.ShopStock = {
+			select: {
+				id: true,
+				productId: true,
+				quantity: true,
+				reservedQty: true,
+				availableQty: true,
+				minStock: true,
+				reorderPoint: true,
+				updatedAt: true,
+			},
+		};
+	}
+
+	const shop = await prisma.shop.findUnique({
+		where: {
+			id,
+			isDeleted: false,
+		},
+		select: shopSelect,
+	});
+	
+	if (!shop) {
+		throw new ApiError(httpStatus.NOT_FOUND, 'Shop not found');
+	}
+
+	if (user.role === 'OWNER' && shop.ownerId !== user.userId) {
+		throw new ApiError(httpStatus.FORBIDDEN, 'You are not allowed to view this shop');
+	}
+
+	return {
+		...shop
+	};
 };
 
 const getOwnerShops = async (user: JWTPayload) => {
@@ -283,17 +407,15 @@ const getOwnerShops = async (user: JWTPayload) => {
 			ownerId: owner.userId,
 			isDeleted: false,
 		},
-		include: {
-			Warehouse: {
-				select: {
-					id: true,
-					name: true,
-					code: true,
-					address: true,
-					city: true,
-					capacity: true
-				},
-			},
+		select:{
+			id:true,
+			ownerId:true,
+			name:true,
+			code:true,
+			description:true,
+			address:true,
+			phone:true,
+			email:true
 		},
 		orderBy: {
 			createdAt: 'desc',
@@ -303,73 +425,15 @@ const getOwnerShops = async (user: JWTPayload) => {
 	return result;
 };
 
-const createWarehouseUnderShop = async (req: Request) => {
-	const payload = req.body as WarehousePayload;
-	const user = req.user as JWTPayload;
 
-	const shop = await prisma.shop.findUnique({
-		where: {
-			id: payload.shopId,
-			isDeleted: false,
-		},
-	});
 
-	if (!shop) {
-		throw new ApiError(httpStatus.NOT_FOUND, 'Shop not found');
-	}
-
-	if (user.role === 'OWNER' && shop.ownerId !== user.userId) {
-		throw new ApiError(
-			httpStatus.FORBIDDEN,
-			'You are not allowed to create warehouse in this shop'
-		);
-	}
-
-	const result = await prisma.warehouse.create({
-		data: {
-			shopId: payload.shopId,
-			name: payload.name,
-			code: payload.code,
-			...(payload.description !== undefined && {
-				description: payload.description,
-			}),
-			address: payload.address,
-			city: payload.city,
-			...(payload.capacity !== undefined && { capacity: payload.capacity }),
-			...(payload.managerId !== undefined && { managerId: payload.managerId }),
-			...(payload.isActive !== undefined && { isActive: payload.isActive }),
-		},
-	});
-
-	createAuditLogAsync(
-		{
-			userId: user.userId,
-			shopId: payload.shopId,
-			action: 'CREATE',
-			entity: 'Warehouse',
-			entityId: result.id,
-			entityName: result.name,
-			description: 'Warehouse created under shop',
-			newValues: {
-				shopId: result.shopId,
-				name: result.name,
-				code: result.code,
-				address: result.address,
-				city: result.city,
-			},
-		},
-		req
-	);
-
-	return result;
-};
 
 export const shopService = {
 	createShopByAdmin,
 	createShopByOwner,
-	createWarehouseUnderShop,
 	getAllShopsForAdmin,
 	getShopsByOwnerForAdmin,
 	getShopById,
+	getShopRelationsById,
 	getOwnerShops,
 };

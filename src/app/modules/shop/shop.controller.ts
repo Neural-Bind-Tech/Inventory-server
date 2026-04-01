@@ -1,5 +1,6 @@
 import httpStatus from 'http-status';
 import catchAsync from '../../../lib/catchAsync';
+import pick from '../../../lib/pick';
 import sendResponse from '../../../lib/sendResponse';
 import { shopService } from './shop.service';
 
@@ -21,17 +22,6 @@ const createShopByOwner = catchAsync(async (req, res) => {
 		statusCode: httpStatus.CREATED,
 		success: true,
 		message: 'Shop is created successfully',
-		data: result,
-	});
-});
-
-const createWarehouseUnderShop = catchAsync(async (req, res) => {
-	const result = await shopService.createWarehouseUnderShop(req);
-
-	sendResponse(res, {
-		statusCode: httpStatus.CREATED,
-		success: true,
-		message: 'Warehouse is created successfully',
 		data: result,
 	});
 });
@@ -71,6 +61,31 @@ const getShopById = catchAsync(async (req, res) => {
 	});
 });
 
+const getShopRelationsById = catchAsync(async (req, res) => {
+	const id = String(req.params['id']);
+	
+	const relationFilters = pick(req.query as Record<string, unknown>, ['include']);
+	const includeRaw = relationFilters["include"];
+	const includeValue = typeof includeRaw === 'string' ? includeRaw : undefined;
+
+	const includeArr= includeValue ? includeValue.split(',').map(item => item.trim()) : [];
+	const validRelationsArr = ['employees','supplier','expense','damageproduct','returnproduct','warehouse','shopstock']
+	const validRelations = includeArr.filter(item => validRelationsArr.includes(item));
+
+	const result = await shopService.getShopRelationsById(
+		id,
+		req.user!,
+		validRelations
+	);
+
+	sendResponse(res, {
+		statusCode: httpStatus.OK,
+		success: true,
+		message: 'Shop relations are retrieved successfully',
+		data: result,
+	});
+});
+
 const getOwnerShops = catchAsync(async (req, res) => {
 	const result = await shopService.getOwnerShops(req.user!);
 
@@ -85,9 +100,9 @@ const getOwnerShops = catchAsync(async (req, res) => {
 export const shopController = {
 	createShopByAdmin,
 	createShopByOwner,
-	createWarehouseUnderShop,
 	getAllShopsForAdmin,
 	getShopsByOwnerForAdmin,
 	getShopById,
+	getShopRelationsById,
 	getOwnerShops,
 };

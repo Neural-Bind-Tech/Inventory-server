@@ -361,7 +361,6 @@ export type EmployeeWhereUniqueInput = Prisma.AtLeast<{
   userId?: string
   email?: string
   employeeCode?: string
-  shopId_employeeCode?: Prisma.EmployeeShopIdEmployeeCodeCompoundUniqueInput
   AND?: Prisma.EmployeeWhereInput | Prisma.EmployeeWhereInput[]
   OR?: Prisma.EmployeeWhereInput[]
   NOT?: Prisma.EmployeeWhereInput | Prisma.EmployeeWhereInput[]
@@ -382,7 +381,7 @@ export type EmployeeWhereUniqueInput = Prisma.AtLeast<{
   lastActiveAt?: Prisma.DateTimeNullableFilter<"Employee"> | Date | string | null
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   shop?: Prisma.XOR<Prisma.ShopScalarRelationFilter, Prisma.ShopWhereInput>
-}, "id" | "userId" | "email" | "employeeCode" | "shopId_employeeCode">
+}, "id" | "userId" | "email" | "employeeCode">
 
 export type EmployeeOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -591,11 +590,6 @@ export type EmployeeUncheckedUpdateManyInput = {
 export type EmployeeNullableScalarRelationFilter = {
   is?: Prisma.EmployeeWhereInput | null
   isNot?: Prisma.EmployeeWhereInput | null
-}
-
-export type EmployeeShopIdEmployeeCodeCompoundUniqueInput = {
-  shopId: string
-  employeeCode: string
 }
 
 export type EmployeeCountOrderByAggregateInput = {

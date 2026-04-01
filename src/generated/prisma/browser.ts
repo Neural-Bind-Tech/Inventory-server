@@ -43,6 +43,11 @@ export type Employee = Prisma.EmployeeModel
  */
 export type Shop = Prisma.ShopModel
 /**
+ * Model ShopStock
+ * 
+ */
+export type ShopStock = Prisma.ShopStockModel
+/**
  * Model Warehouse
  * 
  */

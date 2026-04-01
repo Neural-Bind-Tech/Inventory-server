@@ -56,6 +56,7 @@ export const ModelName = {
   Owner: 'Owner',
   Employee: 'Employee',
   Shop: 'Shop',
+  ShopStock: 'ShopStock',
   Warehouse: 'Warehouse',
   WarehouseStock: 'WarehouseStock',
   Category: 'Category',
@@ -205,6 +206,24 @@ export const ShopScalarFieldEnum = {
 } as const
 
 export type ShopScalarFieldEnum = (typeof ShopScalarFieldEnum)[keyof typeof ShopScalarFieldEnum]
+
+
+export const ShopStockScalarFieldEnum = {
+  id: 'id',
+  productId: 'productId',
+  shopId: 'shopId',
+  quantity: 'quantity',
+  reservedQty: 'reservedQty',
+  availableQty: 'availableQty',
+  minStock: 'minStock',
+  maxStock: 'maxStock',
+  reorderPoint: 'reorderPoint',
+  location: 'location',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ShopStockScalarFieldEnum = (typeof ShopStockScalarFieldEnum)[keyof typeof ShopStockScalarFieldEnum]
 
 
 export const WarehouseScalarFieldEnum = {

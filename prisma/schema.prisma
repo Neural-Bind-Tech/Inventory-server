@@ -35,11 +35,7 @@ model User {
 
   @@index([phone])
   @@index([email])
-  @@index([status])
   @@index([role])
-  @@index([phone, status, role])
-  @@index([email, status, role])
-  @@index([lastFailedLogin, loginAttempts])
   @@map("users")
 }
 
@@ -105,8 +101,6 @@ model Owner {
   @@index([name])
   @@index([taxId])
   @@index([address])
-  @@index([businessName])
-  @@index([businessType])
   @@map("owners")
 }
 
@@ -145,18 +139,11 @@ model Employee {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
 
-  @@unique([shopId, employeeCode])
-  @@index([shopId])
-  @@index([userId])
-  @@index([status])
-  @@index([isDeleted])
-  @@index([joiningDate])
   @@index([email])
   @@index([phone])
   @@index([name])
   @@index([employeeCode])
-  @@index([shopId, status, joiningDate])
-  @@index([status, lastActiveAt])
+
   @@map("employees")
 }
 
@@ -218,12 +205,43 @@ model Shop {
   Adjustment    Adjustment[]
   AuditLog      AuditLog[]
   Subcategory   Subcategory[]
+  ShopStock     ShopStock[]
 
   @@index([code])
   @@index([city])
   @@index([name])
   @@index([address])
   @@map("shops")
+}
+
+model ShopStock {
+  id          String @id @default(uuid())
+  productId   String
+  shopId      String
+
+  quantity     Int @default(0)
+  reservedQty  Int @default(0)
+  availableQty Int @default(0)
+
+  // Stock Levels
+  minStock     Int  @default(1)
+  maxStock     Int?
+  reorderPoint Int?
+
+  // Location in warehouse
+  location String? // Shelf, Bin, etc.
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  product   Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  shop      Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([quantity])
+  @@map("shop_stock")
 }
 
 model Warehouse {
@@ -393,6 +411,7 @@ model Product {
   ReturnProduct  ReturnProduct[]
   SaleItem       SaleItem[]
   PurchaseItem   PurchaseItem[]
+  ShopStock      ShopStock[]
   WarehouseStock WarehouseStock[]
   StockMovement  StockMovement[]
   StockAlert     StockAlert[]

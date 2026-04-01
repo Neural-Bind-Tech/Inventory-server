@@ -569,14 +569,6 @@ export type WarehouseUncheckedUpdateManyWithoutShopNestedInput = {
   deleteMany?: Prisma.WarehouseScalarWhereInput | Prisma.WarehouseScalarWhereInput[]
 }
 
-export type NullableIntFieldUpdateOperationsInput = {
-  set?: number | null
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
-}
-
 export type WarehouseCreateNestedOneWithoutWarehouseStockInput = {
   create?: Prisma.XOR<Prisma.WarehouseCreateWithoutWarehouseStockInput, Prisma.WarehouseUncheckedCreateWithoutWarehouseStockInput>
   connectOrCreate?: Prisma.WarehouseCreateOrConnectWithoutWarehouseStockInput
