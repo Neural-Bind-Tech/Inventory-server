@@ -5,6 +5,8 @@ import { ownerRoutes } from '../modules/owner/owner.routes';
 import { employeeRoutes } from '../modules/employee/employee.routes';
 import { adminRoutes } from '../modules/admin/admin.routes';
 import { shopRoutes } from '../modules/shop/shop.routes';
+import { categoryRoutes } from '../modules/category/category.routes';
+import { subcategoryRoutes } from '../modules/subcategory/subcategory.routes';
 
 const router = express.Router();
 
@@ -32,6 +34,14 @@ const moduleRoutes = [
   {
     path: '/shop',
     route: shopRoutes,
+  },
+  {
+    path: '/category',
+    route: categoryRoutes,
+  },
+  {
+    path: '/subcategory',
+    route: subcategoryRoutes,
   },
 ];
 
