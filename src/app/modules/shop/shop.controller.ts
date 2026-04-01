@@ -26,6 +26,28 @@ const createShopByOwner = catchAsync(async (req, res) => {
 	});
 });
 
+const updateShop = catchAsync(async (req, res) => {
+	const result = await shopService.updateShop(req);
+
+	sendResponse(res, {
+		statusCode: httpStatus.OK,
+		success: true,
+		message: 'Shop is updated successfully',
+		data: result,
+	});
+});
+
+const deleteShop = catchAsync(async (req, res) => {
+	const result = await shopService.deleteShop(req);
+
+	sendResponse(res, {
+		statusCode: httpStatus.OK,
+		success: true,
+		message: 'Shop is deleted successfully',
+		data: result,
+	});
+});
+
 const getAllShopsForAdmin = catchAsync(async (_req, res) => {
 	const result = await shopService.getAllShopsForAdmin();
 
@@ -100,6 +122,8 @@ const getOwnerShops = catchAsync(async (req, res) => {
 export const shopController = {
 	createShopByAdmin,
 	createShopByOwner,
+	updateShop,
+	deleteShop,
 	getAllShopsForAdmin,
 	getShopsByOwnerForAdmin,
 	getShopById,

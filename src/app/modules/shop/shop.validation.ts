@@ -31,6 +31,10 @@ const createShopByOwnerSchema = z.object({
 	body: shopBaseSchema,
 });
 
+const updateShopSchema = z.object({
+	body: shopBaseSchema.partial(),
+});
+
 const createWarehouseSchema = z.object({
 	body: z.object({
 		shopId: z.string().min(1, 'Shop id is required'),
@@ -48,5 +52,6 @@ const createWarehouseSchema = z.object({
 export const shopValidation = {
 	createShopByAdminSchema,
 	createShopByOwnerSchema,
+	updateShopSchema,
 	createWarehouseSchema,
 };

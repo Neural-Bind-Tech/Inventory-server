@@ -36,6 +36,26 @@ router.post(
 	shopController.createShopByOwner
 );
 
+router.put(
+	'/:id',
+	auth(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.OWNER),
+	FileUploadHelper.upload.single('file'),
+	(req, _res, next) => {
+		if (req?.body?.data) {
+			req.body = JSON.parse(req.body.data);
+		}
+		next();
+	},
+	validateRequest(shopValidation.updateShopSchema),
+	shopController.updateShop
+);
+
+router.delete(
+	'/:id',
+	auth(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.OWNER),
+	shopController.deleteShop
+);
+
 router.get(
 	'/',
 	auth(UserRole.SUPER_ADMIN, UserRole.ADMIN),

@@ -148,6 +148,168 @@ const createShopByOwner = async (req: Request) => {
 	return result;
 };
 
+const updateShop = async (req: Request) => {
+	const id = String(req.params['id']);
+	const payload = req.body as Partial<ShopPayload>;
+	const file = req.file as IUploadFile;
+	const user = req.user as JWTPayload;
+
+	const shopData = await prisma.shop.findUnique({
+		where: {
+			id,
+			isDeleted: false,
+		},
+	});
+
+	if (!shopData) {
+		throw new ApiError(httpStatus.NOT_FOUND, 'Shop not found');
+	}
+
+	if (user.role === 'OWNER' && shopData.ownerId !== user.userId) {
+		throw new ApiError(
+			httpStatus.FORBIDDEN,
+			'You are not allowed to update this shop'
+		);
+	}
+
+	if (payload.code && payload.code !== shopData.code) {
+		const existingShop = await prisma.shop.findFirst({
+			where: {
+				code: payload.code,
+				isDeleted: false,
+				id: { not: id },
+			},
+		});
+
+		if (existingShop) {
+			throw new ApiError(httpStatus.BAD_REQUEST, 'Shop code already exists');
+		}
+	}
+
+	let logo = shopData.logo;
+	if (file) {
+		const uploadResult = await FileUploadHelper.uploadToCloudinary(file);
+		logo = uploadResult?.secure_url || null;
+	}
+
+	const updateData: Prisma.ShopUpdateInput = {
+		...(payload.name !== undefined && { name: payload.name }),
+		...(payload.code !== undefined && { code: payload.code }),
+		...(payload.description !== undefined && { description: payload.description }),
+		...(payload.phone !== undefined && { phone: payload.phone }),
+		...(payload.email !== undefined && { email: payload.email }),
+		...(payload.website !== undefined && { website: payload.website }),
+		...(payload.address !== undefined && { address: payload.address }),
+		...(payload.city !== undefined && { city: payload.city }),
+		...(payload.division !== undefined && { division: payload.division }),
+		...(payload.zipCode !== undefined && { zipCode: payload.zipCode }),
+		...(payload.country !== undefined && { country: payload.country }),
+		...(payload.latitude !== undefined && { latitude: payload.latitude }),
+		...(payload.longitude !== undefined && { longitude: payload.longitude }),
+		...(payload.openingTime !== undefined && { openingTime: payload.openingTime }),
+		...(payload.closingTime !== undefined && { closingTime: payload.closingTime }),
+		...(payload.businessHours !== undefined && {
+			businessHours: payload.businessHours,
+		}),
+		...(payload.status !== undefined && { status: payload.status }),
+		...(payload.logo !== undefined && { logo: payload.logo }),
+		...(file && { logo }),
+	};
+
+	const result = await prisma.shop.update({
+		where: {
+			id,
+		},
+		data: updateData,
+	});
+
+	createAuditLogAsync(
+		{
+			userId: user.userId,
+			shopId: shopData.id,
+			action: 'UPDATE',
+			entity: 'Shop',
+			entityId: shopData.id,
+			entityName: shopData.name,
+			description: 'Shop information updated',
+			oldValues: {
+				name: shopData.name,
+				code: shopData.code,
+				phone: shopData.phone,
+				city: shopData.city,
+				country: shopData.country,
+				status: shopData.status,
+			},
+			newValues: {
+				name: result.name,
+				code: result.code,
+				phone: result.phone,
+				city: result.city,
+				country: result.country,
+				status: result.status,
+			},
+		},
+		req
+	);
+
+	return result;
+};
+
+const deleteShop = async (req: Request) => {
+	const id = String(req.params['id']);
+	const user = req.user as JWTPayload;
+
+	const shopData = await prisma.shop.findUnique({
+		where: {
+			id,
+			isDeleted: false,
+		},
+	});
+
+	if (!shopData) {
+		throw new ApiError(httpStatus.NOT_FOUND, 'Shop not found');
+	}
+
+	if (user.role === 'OWNER' && shopData.ownerId !== user.userId) {
+		throw new ApiError(
+			httpStatus.FORBIDDEN,
+			'You are not allowed to delete this shop'
+		);
+	}
+
+	const result = await prisma.shop.update({
+		where: {
+			id,
+		},
+		data: {
+			isDeleted: true,
+			deletedAt: new Date(),
+		},
+	});
+
+	createAuditLogAsync(
+		{
+			userId: user.userId,
+			shopId: shopData.id,
+			action: 'DELETE',
+			entity: 'Shop',
+			entityId: shopData.id,
+			entityName: shopData.name,
+			description: 'Shop deleted',
+			oldValues: {
+				name: shopData.name,
+				code: shopData.code,
+				phone: shopData.phone,
+				city: shopData.city,
+				country: shopData.country,
+			},
+		},
+		req
+	);
+
+	return result;
+};
+
 const getAllShopsForAdmin = async () => {
 	const result = await prisma.shop.findMany({
 		where: {
@@ -425,12 +587,11 @@ const getOwnerShops = async (user: JWTPayload) => {
 	return result;
 };
 
-
-
-
 export const shopService = {
 	createShopByAdmin,
 	createShopByOwner,
+	updateShop,
+	deleteShop,
 	getAllShopsForAdmin,
 	getShopsByOwnerForAdmin,
 	getShopById,
