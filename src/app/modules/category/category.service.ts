@@ -140,16 +140,14 @@ const getAllCategories = async (
 				[sortBy]: sortOrder,
 			},
 			include: {
-				shop: {
+				subcategories: {
 					select: {
 						id: true,
-						name: true,
-						code: true,
+						name: true
 					},
 				},
 				_count: {
 					select: {
-						subcategories: true,
 						products: true,
 					},
 				},

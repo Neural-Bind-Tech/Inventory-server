@@ -101,9 +101,40 @@ const getAllSubcategories = async (
 	paginationOptions: IPaginationOptions,
 	user: JWTPayload
 ) => {
-	const { searchTerm, ...rest } = filters;
-	const { limit, page, skip, sortBy, sortOrder } =
-		paginationHelpers.calculatePagination(paginationOptions);
+	const { searchTerm, categoryId, ...rest } = filters;
+
+	if (!categoryId) {
+		throw new ApiError(httpStatus.BAD_REQUEST, 'Category id is required');
+	}
+
+	const category = await prisma.category.findUnique({
+		where: { id: categoryId },
+		include: {
+			shop: {
+				select: {
+					ownerId: true,
+					isDeleted: true,
+				},
+			},
+		},
+	});
+
+	if (!category) {
+		throw new ApiError(httpStatus.NOT_FOUND, 'Category not found');
+	}
+
+	if (category.shop.isDeleted) {
+		throw new ApiError(httpStatus.BAD_REQUEST, 'Shop is deleted');
+	}
+
+	if (user.role === 'OWNER' && category.shop.ownerId !== user.userId) {
+		throw new ApiError(
+			httpStatus.FORBIDDEN,
+			'You are not allowed to view this category subcategories'
+		);
+	}
+
+	const { limit, page, skip, sortBy, sortOrder } = paginationHelpers.calculatePagination(paginationOptions);
 
 	const andConditions: Prisma.SubcategoryWhereInput[] = [];
 
@@ -118,6 +149,12 @@ const getAllSubcategories = async (
 		});
 	}
 
+	andConditions.push({
+		categoryId: {
+			equals: categoryId,
+		},
+	});
+
 	if (Object.keys(rest).length > 0) {
 		andConditions.push({
 			AND: Object.keys(rest).map((key) => ({
@@ -125,29 +162,6 @@ const getAllSubcategories = async (
 					equals: (rest as Record<string, unknown>)[key],
 				},
 			})),
-		});
-	}
-
-	if (user.role === 'OWNER') {
-		const owner = await prisma.owner.findUnique({
-			where: {
-				userId: user.userId,
-				isDeleted: false,
-			},
-			select: {
-				userId: true,
-			},
-		});
-
-		if (!owner) {
-			throw new ApiError(httpStatus.NOT_FOUND, 'Owner not found');
-		}
-
-		andConditions.push({
-			shop: {
-				ownerId: owner.userId,
-				isDeleted: false,
-			},
 		});
 	}
 
@@ -207,12 +221,6 @@ const getSubcategoryById = async (id: string, user: JWTPayload) => {
 					ownerId: true,
 					name: true,
 					code: true,
-				},
-			},
-			category: {
-				select: {
-					id: true,
-					name: true,
 				},
 			},
 			_count: {
