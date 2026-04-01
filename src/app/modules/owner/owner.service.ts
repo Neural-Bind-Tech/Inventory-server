@@ -56,20 +56,7 @@ const getAllOwner = async (
 			take: limit,
 			orderBy: {
 				[sortBy]: sortOrder,
-			},
-			include: {
-				user: {
-					select: {
-						id: true,
-						phone: true,
-						email: true,
-						role: true,
-						status: true,
-						createdAt: true,
-						updatedAt: true,
-					},
-				},
-			},
+			}
 		}),
 		prisma.owner.count({ where: whereConditions }),
 	]);
