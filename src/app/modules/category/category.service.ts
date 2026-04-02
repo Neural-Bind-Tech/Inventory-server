@@ -3,12 +3,13 @@ import httpStatus from 'http-status';
 import { Prisma } from '../../../generated/prisma/client';
 import ApiError from '../../../errors/ApiError';
 import { FileUploadHelper } from '../../../helpers/fileUploadHelper';
-import { paginationHelpers } from '../../../helpers/paginationHelper';
-import type { IPaginationOptions, JWTPayload } from '../../../interface';
+import type { JWTPayload } from '../../../interface';
 import type { IUploadFile } from '../../../interface/file';
 import { prisma } from '../../../lib/prisma';
-import { categorySearchField } from './category.const';
-import type { CategoryPayload, ICategoryFilter } from './category.interface';
+import type {
+	CategoryPayload,
+	CategoryRelationKey,
+} from './category.interface';
 
 const ensureShopAccess = async (shopId: string, user: JWTPayload) => {
 	
@@ -74,109 +75,80 @@ const createCategory = async (req: Request) => {
 };
 
 const getAllCategories = async (
-	filters: ICategoryFilter,
-	paginationOptions: IPaginationOptions,
-	user: JWTPayload
+	shopId: string | undefined,
+	user: JWTPayload,
+	validRelations?: string[]
 ) => {
-	const { searchTerm, ...rest } = filters;
-	const { limit, page, skip, sortBy, sortOrder } =
-		paginationHelpers.calculatePagination(paginationOptions);
+	const includes = new Set((validRelations ?? []) as CategoryRelationKey[]);
 
-	const andConditions: Prisma.CategoryWhereInput[] = [];
-
-	if (searchTerm) {
-		andConditions.push({
-			OR: categorySearchField.map((field) => ({
-				[field]: {
-					contains: searchTerm,
-					mode: 'insensitive',
-				},
-			})),
-		});
+	if (!shopId) {
+		throw new ApiError(httpStatus.BAD_REQUEST, 'Shop id is required');
 	}
 
-	if (Object.keys(rest).length > 0) {
-		andConditions.push({
-			AND: Object.keys(rest).map((key) => ({
-				[key]: {
-					equals: (rest as Record<string, unknown>)[key],
-				},
-			})),
-		});
-	}
+	await ensureShopAccess(shopId, user);
 
-	if (user.role === 'OWNER') {
-		const owner = await prisma.owner.findUnique({
-			where: {
-				userId: user.userId,
-				isDeleted: false,
-			},
+	const categoryInclude: Prisma.CategoryInclude = {
+		_count: {
 			select: {
-				userId: true,
+				subcategories: true,
+				products: true,
 			},
-		});
+		},
+	};
 
-		if (!owner) {
-			throw new ApiError(httpStatus.NOT_FOUND, 'Owner not found');
-		}
-
-		andConditions.push({
-			shop: {
-				ownerId: owner.userId,
-				isDeleted: false,
+	if (includes.has('subcategories')) {
+		categoryInclude.subcategories = {
+			select: {
+				id: true,
+				name: true,
 			},
-		});
+		};
 	}
 
-	const whereConditions: Prisma.CategoryWhereInput =
-		andConditions.length > 0 ? { AND: andConditions } : {};
-
-	const [categories, total] = await Promise.all([
-		prisma.category.findMany({
-			where: whereConditions,
-			skip,
-			take: limit,
-			orderBy: {
-				[sortBy]: sortOrder,
+	if (includes.has('products')) {
+		categoryInclude.products = {
+			select: {
+				id: true,
+				productId: true,
+				name: true,
+				sellPrice: true,
+				quantity: true,
+				createdAt: true,
 			},
-			include: {
-				subcategories: {
-					select: {
-						id: true,
-						name: true
-					},
-				},
-				_count: {
-					select: {
-						products: true,
-					},
-				},
-			},
-		}),
-		prisma.category.count({ where: whereConditions }),
-	]);
+		};
+	}
 
-	return {
-		meta: {
-			page,
-			limit,
-			total,
-			totalPages: Math.ceil(total / limit),
+	const categories = await prisma.category.findMany({
+		where: { shopId },
+		orderBy: {
+			createdAt: 'desc',
 		},
-		data: categories,
-	};
+		include: categoryInclude,
+	});
+
+	return categories;
 };
 
-const getCategoryById = async (id: string, user: JWTPayload) => {
+const getCategoryById = async (id: string) => {
 	const category = await prisma.category.findUnique({
 		where: { id },
 		include: {
-			shop: {
+			subcategories: {
 				select: {
 					id: true,
-					ownerId: true,
 					name: true,
-					code: true,
+					description: true,
+					createdAt: true,
+				},
+			},
+			products: {
+				select: {
+					id: true,
+					productId: true,
+					name: true,
+					sellPrice: true,
+					quantity: true,
+					createdAt: true,
 				},
 			},
 			_count: {
@@ -192,99 +164,7 @@ const getCategoryById = async (id: string, user: JWTPayload) => {
 		throw new ApiError(httpStatus.NOT_FOUND, 'Category not found');
 	}
 
-	if (user.role === 'OWNER' && category.shop.ownerId !== user.userId) {
-		throw new ApiError(httpStatus.FORBIDDEN, 'You are not allowed to view this category');
-	}
-
 	return category;
-};
-
-const getCategorySubcategories = async (id: string, user: JWTPayload) => {
-	const category = await prisma.category.findUnique({
-		where: { id },
-		select: {
-			id: true,
-			shopId: true,
-			shop: {
-				select: {
-					ownerId: true,
-				},
-			},
-		},
-	});
-
-	if (!category) {
-		throw new ApiError(httpStatus.NOT_FOUND, 'Category not found');
-	}
-
-	if (user.role === 'OWNER' && category.shop.ownerId !== user.userId) {
-		throw new ApiError(
-			httpStatus.FORBIDDEN,
-			'You are not allowed to view this category subcategories'
-		);
-	}
-
-	const result = await prisma.subcategory.findMany({
-		where: {
-			categoryId: id,
-			shopId: category.shopId,
-		},
-		orderBy: {
-			createdAt: 'desc',
-		},
-		include: {
-			_count: {
-				select: {
-					products: true,
-				},
-			},
-		},
-	});
-
-	return result;
-};
-
-const getCategoryProducts = async (id: string, user: JWTPayload) => {
-	const category = await prisma.category.findUnique({
-		where: { id },
-		include: {
-			shop: {
-				select: {
-					ownerId: true,
-				},
-			},
-		},
-	});
-
-	if (!category) {
-		throw new ApiError(httpStatus.NOT_FOUND, 'Category not found');
-	}
-
-	if (user.role === 'OWNER' && category.shop.ownerId !== user.userId) {
-		throw new ApiError(
-			httpStatus.FORBIDDEN,
-			'You are not allowed to view this category products'
-		);
-	}
-
-	const result = await prisma.product.findMany({
-		where: {
-			categoryId: id,
-		},
-		orderBy: {
-			createdAt: 'desc',
-		},
-		include: {
-			subcategory: {
-				select: {
-					id: true,
-					name: true,
-				},
-			},
-		},
-	});
-
-	return result;
 };
 
 const updateCategory = async (req: Request) => {
@@ -404,8 +284,6 @@ export const categoryService = {
 	createCategory,
 	getAllCategories,
 	getCategoryById,
-	getCategorySubcategories,
-	getCategoryProducts,
 	updateCategory,
 	deleteCategory,
 };

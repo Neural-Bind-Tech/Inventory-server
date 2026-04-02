@@ -29,18 +29,6 @@ router.get(
 );
 
 router.get(
-	'/:id/subcategories',
-	auth(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.OWNER),
-	categoryController.getCategorySubcategories
-);
-
-router.get(
-	'/:id/products',
-	auth(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.OWNER),
-	categoryController.getCategoryProducts
-);
-
-router.get(
 	'/:id',
 	auth(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.OWNER),
 	categoryController.getCategoryById

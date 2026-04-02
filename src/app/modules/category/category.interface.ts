@@ -10,3 +10,5 @@ export interface ICategoryFilter {
 	shopId?: string;
 	name?: string;
 }
+
+export type CategoryRelationKey = 'products' | 'subcategories';
