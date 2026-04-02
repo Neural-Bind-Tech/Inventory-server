@@ -96,15 +96,6 @@ const getAllCategories = async (
 		},
 	};
 
-	if (includes.has('subcategories')) {
-		categoryInclude.subcategories = {
-			select: {
-				id: true,
-				name: true,
-			},
-		};
-	}
-
 	if (includes.has('products')) {
 		categoryInclude.products = {
 			select: {
@@ -113,7 +104,17 @@ const getAllCategories = async (
 				name: true,
 				sellPrice: true,
 				quantity: true,
+				thumbnail: true,
 				createdAt: true,
+			},
+		};
+	}
+
+	if (includes.has('subcategories')) {
+		categoryInclude.subcategories = {
+			select: {
+				id: true,
+				name: true,
 			},
 		};
 	}
@@ -148,6 +149,7 @@ const getCategoryById = async (id: string) => {
 					name: true,
 					sellPrice: true,
 					quantity: true,
+					thumbnail: true,
 					createdAt: true,
 				},
 			},
@@ -266,7 +268,10 @@ const deleteCategory = async (req: Request) => {
 		throw new ApiError(httpStatus.FORBIDDEN, 'You are not allowed to delete this category');
 	}
 
-	if (categoryData._count.subcategories > 0 || categoryData._count.products > 0) {
+	if (
+		categoryData._count.subcategories > 0 ||
+		categoryData._count.products > 0
+	) {
 		throw new ApiError(
 			httpStatus.BAD_REQUEST,
 			'Category cannot be deleted because related subcategories or products exist'

@@ -177,19 +177,6 @@ const getAllSubcategories = async (
 				[sortBy]: sortOrder,
 			},
 			include: {
-				shop: {
-					select: {
-						id: true,
-						name: true,
-						code: true,
-					},
-				},
-				category: {
-					select: {
-						id: true,
-						name: true,
-					},
-				},
 				_count: {
 					select: {
 						products: true,
@@ -222,12 +209,7 @@ const getSubcategoryById = async (id: string, user: JWTPayload) => {
 					name: true,
 					code: true,
 				},
-			},
-			_count: {
-				select: {
-					products: true,
-				},
-			},
+			}
 		},
 	});
 
@@ -360,7 +342,9 @@ const deleteSubcategory = async (req: Request) => {
 		);
 	}
 
-	if (subcategoryData._count.products > 0) {
+	if (
+		subcategoryData._count.products > 0
+	) {
 		throw new ApiError(
 			httpStatus.BAD_REQUEST,
 			'Subcategory cannot be deleted because related products exist'

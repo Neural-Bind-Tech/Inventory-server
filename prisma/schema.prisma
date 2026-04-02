@@ -206,6 +206,7 @@ model Shop {
   AuditLog      AuditLog[]
   Subcategory   Subcategory[]
   ShopStock     ShopStock[]
+  Product       Product[]
 
   @@index([code])
   @@index([city])
@@ -366,14 +367,15 @@ model Product {
   id        String @id @default(uuid())
   productId String @unique
 
+  // Ownership & Categorization
+  shopId        String
+  categoryId    String?
+  subcategoryId String?
+
   // Basic Info
   name        String
   description String?
   brand       String?
-
-  // Categorization
-  categoryId    String
-  subcategoryId String?
 
   // Product Identifiers
   barcode String? @unique
@@ -405,8 +407,9 @@ model Product {
   updatedAt DateTime @updatedAt
 
   // Relations
-  category       Category         @relation(fields: [categoryId], references: [id])
-  subcategory    Subcategory?     @relation(fields: [subcategoryId], references: [id])
+  shop           Shop            @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  category       Category?       @relation(fields: [categoryId], references: [id])
+  subcategory    Subcategory?    @relation(fields: [subcategoryId], references: [id])
   DamageProduct  DamageProduct[]
   ReturnProduct  ReturnProduct[]
   SaleItem       SaleItem[]
@@ -418,17 +421,13 @@ model Product {
   ProductVariant ProductVariant[]
   Adjustment     Adjustment[]
 
+  @@index([shopId])
   @@index([categoryId])
   @@index([subcategoryId])
   @@index([brand])
   @@index([name])
   @@index([buyPrice])
   @@index([sellPrice])
-  @@index([createdAt])
-  @@index([categoryId, quantity])
-  @@index([subcategoryId, quantity])
-  @@index([expiryDate, quantity])
-  @@index([quantity, minStock])
   @@map("products")
 }
 
