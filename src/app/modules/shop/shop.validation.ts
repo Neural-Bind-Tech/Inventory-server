@@ -49,9 +49,24 @@ const createWarehouseSchema = z.object({
 	}),
 });
 
+const createShopStockSchema = z.object({
+	body: z.object({
+		shopId: z.string().min(1, 'Shop id is required'),
+		productId: z.string().min(1, 'Product id is required'),
+		quantity: z.number().int().nonnegative().optional(),
+		reservedQty: z.number().int().nonnegative().optional(),
+		availableQty: z.number().int().nonnegative().optional(),
+		minStock: z.number().int().positive().optional(),
+		maxStock: z.number().int().positive().optional(),
+		reorderPoint: z.number().int().positive().optional(),
+		location: z.string().optional(),
+	}),
+});
+
 export const shopValidation = {
 	createShopByAdminSchema,
 	createShopByOwnerSchema,
 	updateShopSchema,
 	createWarehouseSchema,
+	createShopStockSchema,
 };

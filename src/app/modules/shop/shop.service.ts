@@ -7,7 +7,7 @@ import { FileUploadHelper } from '../../../helpers/fileUploadHelper';
 import type { JWTPayload } from '../../../interface';
 import type { IUploadFile } from '../../../interface/file';
 import { prisma } from '../../../lib/prisma';
-import { ShopPayload, ShopRelationKey} from './shop.interface';
+import { ShopPayload, ShopRelationKey, ShopStockPayload} from './shop.interface';
 
 
 const buildShopCreateData = (
@@ -587,6 +587,186 @@ const getOwnerShops = async (user: JWTPayload) => {
 	return result;
 };
 
+const createShopStock = async (req: Request) => {
+	const payload = req.body as ShopStockPayload;
+	const user = req.user as JWTPayload;
+
+	const shop = await prisma.shop.findUnique({
+		where: {
+			id: payload.shopId,
+			isDeleted: false,
+		},
+		select: {
+			id: true,
+			ownerId: true,
+		},
+	});
+
+	if (!shop) {
+		throw new ApiError(httpStatus.NOT_FOUND, 'Shop not found');
+	}
+
+	if (user.role === 'OWNER' && shop.ownerId !== user.userId) {
+		throw new ApiError(
+			httpStatus.FORBIDDEN,
+			'You are not allowed to create stock for this shop'
+		);
+	}
+
+	const product = await prisma.product.findUnique({
+		where: {
+			id: payload.productId,
+		},
+		select: {
+			id: true,
+			shopId: true,
+			name: true,
+		},
+	});
+
+	if (!product) {
+		throw new ApiError(httpStatus.NOT_FOUND, 'Product not found');
+	}
+
+	if (product.shopId !== payload.shopId) {
+		throw new ApiError(
+			httpStatus.BAD_REQUEST,
+			'Product does not belong to the provided shop'
+		);
+	}
+
+	const createQuantity = payload.quantity ?? 0;
+	const createReservedQty = payload.reservedQty ?? 0;
+	const createAvailableQty =
+		payload.availableQty ?? Math.max(createQuantity - createReservedQty, 0);
+
+	const result = await prisma.shopStock.upsert({
+		where: {
+			shopId_productId: {
+				shopId: payload.shopId,
+				productId: payload.productId,
+			},
+		},
+		update: {
+			...(payload.quantity !== undefined && {
+				quantity: { increment: payload.quantity },
+			}),
+			...(payload.reservedQty !== undefined && {
+				reservedQty: payload.reservedQty,
+			}),
+			...(payload.availableQty !== undefined
+				? { availableQty: payload.availableQty }
+				: payload.quantity !== undefined
+					? { availableQty: { increment: payload.quantity } }
+					: {}),
+			...(payload.minStock !== undefined && { minStock: payload.minStock }),
+			...(payload.maxStock !== undefined && { maxStock: payload.maxStock }),
+			...(payload.reorderPoint !== undefined && {
+				reorderPoint: payload.reorderPoint,
+			}),
+			...(payload.location !== undefined && { location: payload.location }),
+		},
+		create: {
+			shop: {
+				connect: {
+					id: payload.shopId,
+				},
+			},
+			product: {
+				connect: {
+					id: payload.productId,
+				},
+			},
+			quantity: createQuantity,
+			reservedQty: createReservedQty,
+			availableQty: createAvailableQty,
+			...(payload.minStock !== undefined && { minStock: payload.minStock }),
+			...(payload.maxStock !== undefined && { maxStock: payload.maxStock }),
+			...(payload.reorderPoint !== undefined && {
+				reorderPoint: payload.reorderPoint,
+			}),
+			...(payload.location !== undefined && { location: payload.location }),
+		},
+		select: {
+			id: true,
+			shopId: true,
+			productId: true,
+			quantity: true,
+			reservedQty: true,
+			availableQty: true,
+			minStock: true,
+			maxStock: true,
+			reorderPoint: true,
+			location: true,
+			updatedAt: true,
+			product: {
+				select: {
+					name: true,
+					productId: true,
+				},
+			},
+		},
+	});
+
+	return result;
+};
+
+const getShopStocksByShopId = async (shopId: string, user: JWTPayload) => {
+	const shop = await prisma.shop.findUnique({
+		where: {
+			id: shopId,
+			isDeleted: false,
+		},
+		select: {
+			id: true,
+			ownerId: true,
+		},
+	});
+
+	if (!shop) {
+		throw new ApiError(httpStatus.NOT_FOUND, 'Shop not found');
+	}
+
+	if (user.role === 'OWNER' && shop.ownerId !== user.userId) {
+		throw new ApiError(
+			httpStatus.FORBIDDEN,
+			'You are not allowed to view stock for this shop'
+		);
+	}
+
+	const result = await prisma.shopStock.findMany({
+		where: {
+			shopId,
+		},
+		orderBy: {
+			updatedAt: 'desc',
+		},
+		select: {
+			id: true,
+			shopId: true,
+			productId: true,
+			quantity: true,
+			reservedQty: true,
+			availableQty: true,
+			minStock: true,
+			maxStock: true,
+			reorderPoint: true,
+			location: true,
+			updatedAt: true,
+			product: {
+				select: {
+					name: true,
+					productId: true,
+					barcode: true,
+					thumbnail: true,
+				},
+			},
+		},
+	});
+
+	return result;
+};
+
 export const shopService = {
 	createShopByAdmin,
 	createShopByOwner,
@@ -597,4 +777,6 @@ export const shopService = {
 	getShopById,
 	getShopRelationsById,
 	getOwnerShops,
+	createShopStock,
+	getShopStocksByShopId,
 };

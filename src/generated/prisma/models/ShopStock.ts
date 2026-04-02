@@ -315,6 +315,7 @@ export type ShopStockOrderByWithRelationInput = {
 
 export type ShopStockWhereUniqueInput = Prisma.AtLeast<{
   id?: string
+  shopId_productId?: Prisma.ShopStockShopIdProductIdCompoundUniqueInput
   AND?: Prisma.ShopStockWhereInput | Prisma.ShopStockWhereInput[]
   OR?: Prisma.ShopStockWhereInput[]
   NOT?: Prisma.ShopStockWhereInput | Prisma.ShopStockWhereInput[]
@@ -331,7 +332,7 @@ export type ShopStockWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"ShopStock"> | Date | string
   product?: Prisma.XOR<Prisma.ProductScalarRelationFilter, Prisma.ProductWhereInput>
   shop?: Prisma.XOR<Prisma.ShopScalarRelationFilter, Prisma.ShopWhereInput>
-}, "id">
+}, "id" | "shopId_productId">
 
 export type ShopStockOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -482,6 +483,11 @@ export type ShopStockListRelationFilter = {
 
 export type ShopStockOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
+}
+
+export type ShopStockShopIdProductIdCompoundUniqueInput = {
+  shopId: string
+  productId: string
 }
 
 export type ShopStockCountOrderByAggregateInput = {

@@ -34,6 +34,18 @@ export interface WarehousePayload {
 	isActive?: boolean;
 }
 
+export interface ShopStockPayload {
+	shopId: string;
+	productId: string;
+	quantity?: number;
+	reservedQty?: number;
+	availableQty?: number;
+	minStock?: number;
+	maxStock?: number;
+	reorderPoint?: number;
+	location?: string;
+}
+
 export type ShopRelationKey =
 	| 'employees'
 	| 'supplier'

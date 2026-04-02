@@ -119,6 +119,29 @@ const getOwnerShops = catchAsync(async (req, res) => {
 	});
 });
 
+const createShopStock = catchAsync(async (req, res) => {
+	const result = await shopService.createShopStock(req);
+
+	sendResponse(res, {
+		statusCode: httpStatus.CREATED,
+		success: true,
+		message: 'Shop stock is created successfully',
+		data: result,
+	});
+});
+
+const getShopStocksByShopId = catchAsync(async (req, res) => {
+	const shopId = String(req.params['id']);
+	const result = await shopService.getShopStocksByShopId(shopId, req.user!);
+
+	sendResponse(res, {
+		statusCode: httpStatus.OK,
+		success: true,
+		message: 'Shop stocks are retrieved successfully',
+		data: result,
+	});
+});
+
 export const shopController = {
 	createShopByAdmin,
 	createShopByOwner,
@@ -129,4 +152,6 @@ export const shopController = {
 	getShopById,
 	getShopRelationsById,
 	getOwnerShops,
+	createShopStock,
+	getShopStocksByShopId,
 };

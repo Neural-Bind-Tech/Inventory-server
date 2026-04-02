@@ -74,6 +74,19 @@ router.get(
 	shopController.getOwnerShops
 );
 
+router.post(
+	'/shop-stock',
+	auth(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.OWNER),
+	validateRequest(shopValidation.createShopStockSchema),
+	shopController.createShopStock
+);
+
+router.get(
+	'/:id/shop-stock',
+	auth(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.OWNER),
+	shopController.getShopStocksByShopId
+);
+
 router.get(
 	'/:id/relations',
 	auth(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.OWNER),
