@@ -33,6 +33,7 @@ const createAdmin = async (req: Request) => {
   };
 
   const result = await prisma.$transaction(async (transactionClient) => {
+    
     const createdUserData = await transactionClient.user.create({
       data: userData,
     });
@@ -103,6 +104,7 @@ const createOwner = async (req: Request) => {
   };
 
   const result = await prisma.$transaction(async (transactionClient) => {
+    
     const createdUserData = await transactionClient.user.create({
       data: userData,
     });
