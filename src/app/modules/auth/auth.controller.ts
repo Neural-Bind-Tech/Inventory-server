@@ -14,7 +14,7 @@ const loginUser = catchAsync(async (req: Request, res: Response) => {
     statusCode: 200,
     success: true,
     message: 'Login is successful.',
-    data: result.message
+    data: result
   });
 
 });
@@ -77,11 +77,39 @@ const logoutUser = catchAsync(async (req: Request, res: Response) => {
 
 });
 
+const forgotPassword = catchAsync(async (req: Request, res: Response) => {
+  const result = await AuthService.forgotPassword(req);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: result.message,
+    data: {
+      message: result.message,
+    },
+  });
+});
+
+const resetPassword = catchAsync(async (req: Request, res: Response) => {
+  const result = await AuthService.resetPassword(req);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: result.message,
+    data: {
+      message: result.message,
+    },
+  });
+});
+
 
 export const AuthController = {
   loginUser,
   getTokenForTest,
   changePassword,
   getMe,
-  logoutUser
+  logoutUser,
+  forgotPassword,
+  resetPassword,
 };

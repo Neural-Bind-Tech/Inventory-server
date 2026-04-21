@@ -9,6 +9,12 @@ export interface TokenPayload extends JWTPayload {
   tokenId: string;
 }
 
+export interface ResetPasswordTokenPayload {
+  userId: string;
+  type: 'RESET_PASSWORD';
+  randomToken: string;
+}
+
 interface TokenPair {
   accessToken: string;
   refreshToken: string;
@@ -61,6 +67,22 @@ const verifyToken = (token: string): Promise<TokenPayload> => {
   });
 };
 
+const verifyResetPasswordToken = (
+  token: string
+): Promise<ResetPasswordTokenPayload> => {
+  return new Promise<ResetPasswordTokenPayload>((resolve, reject) => {
+    jwt.verify(token, publicKey, { algorithms: ['RS256'] }, (err, payload) => {
+      if (err) {
+        reject(err);
+      } else if (payload && Object.keys(payload).length > 0) {
+        resolve(payload as ResetPasswordTokenPayload);
+      } else {
+        reject(new Error('Reset token verification failed'));
+      }
+    });
+  });
+};
+
 const generateTokenId = (): string => {
   return crypto.randomBytes(32).toString('hex');
 };
@@ -93,7 +115,27 @@ const generateTokenPair = async (userData: JWTPayload): Promise<TokenPair> => {
   };
 };
 
+const generateResetPasswordToken = async (userId: string) => {
+  const randomToken = crypto.randomBytes(32).toString('hex');
+
+  const token = await signToken(
+    {
+      userId,
+      type: 'RESET_PASSWORD',
+      randomToken,
+    } as ResetPasswordTokenPayload,
+    { expiresIn: '15m' }
+  );
+
+  return {
+    token,
+    randomToken,
+  };
+};
+
 export const jwtHelpers = {
   generateTokenPair,
+  generateResetPasswordToken,
   verifyToken,
+  verifyResetPasswordToken,
 };

@@ -14,6 +14,18 @@ router.post(
 );
 
 router.post(
+    '/forgot-password',
+    validateRequest(AuthValidation.forgotPasswordZodSchema),
+    AuthController.forgotPassword
+);
+
+router.post(
+    '/reset-password',
+    validateRequest(AuthValidation.resetPasswordZodSchema),
+    AuthController.resetPassword
+);
+
+router.post(
     '/test',
     auth(UserRole.SUPER_ADMIN),
     AuthController.getTokenForTest

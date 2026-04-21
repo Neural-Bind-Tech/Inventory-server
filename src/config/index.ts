@@ -14,6 +14,7 @@ export default {
   port: process.env['PORT'],
   database_url: process.env['DATABASE_URL'],
   backend_url: process.env['BACKEND_URL'],
+  frontend_url: process.env['FRONTEND_URL'],
   jwt: {
     secret: process.env['JWT_SECRET'],
     expires_in: process.env['EXPIRES_IN'],

@@ -44,13 +44,6 @@ const auth =
         );
       }
 
-      const isBlacklisted = await prisma.tokenBlacklist.findFirst({
-        where: { tokenId, userId },
-      });
-      if (isBlacklisted) {
-        throw new ApiError(httpStatus.UNAUTHORIZED, 'Token has been revoked');
-      }
-
       if (requiredRoles.length && !requiredRoles.includes(role)) {
         throw new ApiError(
           httpStatus.FORBIDDEN,
@@ -103,17 +96,6 @@ const auth =
             throw new ApiError(httpStatus.UNAUTHORIZED, 'Invalid token');
           }
 
-          const isBlacklisted = await prisma.tokenBlacklist.findFirst({
-            where: { tokenId },
-          });
-
-          if (isBlacklisted) {
-            throw new ApiError(
-              httpStatus.UNAUTHORIZED,
-              'Session has been revoked'
-            );
-          }
-
           const client = getDeviceInfo(req);
 
           const newTokenPair = await jwtHelpers.generateTokenPair({
@@ -127,28 +109,6 @@ const auth =
             prisma.activeToken.delete({ where: { id: activeRefreshToken.id } }),
             prisma.activeToken.delete({
               where: { tokenId: `access_${accessTokenId}` },
-            }),
-            prisma.tokenBlacklist.create({
-              data: {
-                tokenId,
-                expiresAt: activeRefreshToken.expiresAt,
-                issuedAt: activeRefreshToken.createdAt,
-                ipAddress: activeRefreshToken.ipAddress,
-                tokenType: activeRefreshToken.tokenType,
-                userId,
-                reason: 'Token used for refresh',
-              },
-            }),
-            prisma.tokenBlacklist.create({
-              data: {
-                tokenId: `access_${accessTokenId}`,
-                expiresAt: activeAccessToken.expiresAt,
-                issuedAt: activeAccessToken.createdAt,
-                ipAddress: activeAccessToken.ipAddress,
-                tokenType: activeAccessToken.tokenType,
-                userId,
-                reason: 'Token used for refresh',
-              },
             }),
 
             prisma.activeToken.create({

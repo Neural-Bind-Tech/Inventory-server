@@ -37,9 +37,30 @@ const changePasswordZodSchema = z.object({
     }),
 });
 
+const forgotPasswordZodSchema = z.object({
+    body: z.object({
+        email: z.email({
+            error: 'Valid email is required',
+        }),
+    }),
+});
+
+const resetPasswordZodSchema = z.object({
+    body: z.object({
+        token: z.string({
+            error: 'Reset token is required',
+        }),
+        newPassword: z.string({
+            error: 'New password is required',
+        }).min(6, 'Password must be at least 6 characters'),
+    }),
+});
+
 export const AuthValidation = {
     loginZodSchema,
     verifyZodSchema,
     refreshTokenZodSchema,
     changePasswordZodSchema,
+    forgotPasswordZodSchema,
+    resetPasswordZodSchema,
 };

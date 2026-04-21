@@ -24,3 +24,12 @@ export type IChangePassword = {
     oldPassword: string;
     newPassword: string;
 };
+
+export type IForgotPassword = {
+    email: string;
+};
+
+export type IResetPassword = {
+    token: string;
+    newPassword: string;
+};
