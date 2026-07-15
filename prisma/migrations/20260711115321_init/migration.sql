@@ -199,6 +199,24 @@ CREATE TABLE "shops" (
 );
 
 -- CreateTable
+CREATE TABLE "shop_stock" (
+    "id" TEXT NOT NULL,
+    "productId" TEXT NOT NULL,
+    "shopId" TEXT NOT NULL,
+    "quantity" INTEGER NOT NULL DEFAULT 0,
+    "reservedQty" INTEGER NOT NULL DEFAULT 0,
+    "availableQty" INTEGER NOT NULL DEFAULT 0,
+    "minStock" INTEGER NOT NULL DEFAULT 1,
+    "maxStock" INTEGER,
+    "reorderPoint" INTEGER,
+    "location" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "shop_stock_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "warehouses" (
     "id" TEXT NOT NULL,
     "shopId" TEXT NOT NULL,
@@ -265,11 +283,12 @@ CREATE TABLE "subcategories" (
 CREATE TABLE "products" (
     "id" TEXT NOT NULL,
     "productId" TEXT NOT NULL,
+    "shopId" TEXT NOT NULL,
+    "categoryId" TEXT,
+    "subcategoryId" TEXT,
     "name" TEXT NOT NULL,
     "description" TEXT,
     "brand" TEXT,
-    "categoryId" TEXT NOT NULL,
-    "subcategoryId" TEXT,
     "barcode" TEXT,
     "qrCode" TEXT,
     "buyPrice" DECIMAL(10,2) NOT NULL,
@@ -692,19 +711,7 @@ CREATE INDEX "users_phone_idx" ON "users"("phone");
 CREATE INDEX "users_email_idx" ON "users"("email");
 
 -- CreateIndex
-CREATE INDEX "users_status_idx" ON "users"("status");
-
--- CreateIndex
 CREATE INDEX "users_role_idx" ON "users"("role");
-
--- CreateIndex
-CREATE INDEX "users_phone_status_role_idx" ON "users"("phone", "status", "role");
-
--- CreateIndex
-CREATE INDEX "users_email_status_role_idx" ON "users"("email", "status", "role");
-
--- CreateIndex
-CREATE INDEX "users_lastFailedLogin_loginAttempts_idx" ON "users"("lastFailedLogin", "loginAttempts");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "admins_userId_key" ON "admins"("userId");
@@ -749,12 +756,6 @@ CREATE INDEX "owners_taxId_idx" ON "owners"("taxId");
 CREATE INDEX "owners_address_idx" ON "owners"("address");
 
 -- CreateIndex
-CREATE INDEX "owners_businessName_idx" ON "owners"("businessName");
-
--- CreateIndex
-CREATE INDEX "owners_businessType_idx" ON "owners"("businessType");
-
--- CreateIndex
 CREATE UNIQUE INDEX "employees_userId_key" ON "employees"("userId");
 
 -- CreateIndex
@@ -762,21 +763,6 @@ CREATE UNIQUE INDEX "employees_email_key" ON "employees"("email");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "employees_employeeCode_key" ON "employees"("employeeCode");
-
--- CreateIndex
-CREATE INDEX "employees_shopId_idx" ON "employees"("shopId");
-
--- CreateIndex
-CREATE INDEX "employees_userId_idx" ON "employees"("userId");
-
--- CreateIndex
-CREATE INDEX "employees_status_idx" ON "employees"("status");
-
--- CreateIndex
-CREATE INDEX "employees_isDeleted_idx" ON "employees"("isDeleted");
-
--- CreateIndex
-CREATE INDEX "employees_joiningDate_idx" ON "employees"("joiningDate");
 
 -- CreateIndex
 CREATE INDEX "employees_email_idx" ON "employees"("email");
@@ -789,15 +775,6 @@ CREATE INDEX "employees_name_idx" ON "employees"("name");
 
 -- CreateIndex
 CREATE INDEX "employees_employeeCode_idx" ON "employees"("employeeCode");
-
--- CreateIndex
-CREATE INDEX "employees_shopId_status_joiningDate_idx" ON "employees"("shopId", "status", "joiningDate");
-
--- CreateIndex
-CREATE INDEX "employees_status_lastActiveAt_idx" ON "employees"("status", "lastActiveAt");
-
--- CreateIndex
-CREATE UNIQUE INDEX "employees_shopId_employeeCode_key" ON "employees"("shopId", "employeeCode");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "shops_code_key" ON "shops"("code");
@@ -813,6 +790,15 @@ CREATE INDEX "shops_name_idx" ON "shops"("name");
 
 -- CreateIndex
 CREATE INDEX "shops_address_idx" ON "shops"("address");
+
+-- CreateIndex
+CREATE INDEX "shop_stock_productId_idx" ON "shop_stock"("productId");
+
+-- CreateIndex
+CREATE INDEX "shop_stock_quantity_idx" ON "shop_stock"("quantity");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "shop_stock_shopId_productId_key" ON "shop_stock"("shopId", "productId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "warehouses_code_key" ON "warehouses"("code");
@@ -875,6 +861,9 @@ CREATE UNIQUE INDEX "products_barcode_key" ON "products"("barcode");
 CREATE UNIQUE INDEX "products_qrCode_key" ON "products"("qrCode");
 
 -- CreateIndex
+CREATE INDEX "products_shopId_idx" ON "products"("shopId");
+
+-- CreateIndex
 CREATE INDEX "products_categoryId_idx" ON "products"("categoryId");
 
 -- CreateIndex
@@ -891,21 +880,6 @@ CREATE INDEX "products_buyPrice_idx" ON "products"("buyPrice");
 
 -- CreateIndex
 CREATE INDEX "products_sellPrice_idx" ON "products"("sellPrice");
-
--- CreateIndex
-CREATE INDEX "products_createdAt_idx" ON "products"("createdAt");
-
--- CreateIndex
-CREATE INDEX "products_categoryId_quantity_idx" ON "products"("categoryId", "quantity");
-
--- CreateIndex
-CREATE INDEX "products_subcategoryId_quantity_idx" ON "products"("subcategoryId", "quantity");
-
--- CreateIndex
-CREATE INDEX "products_expiryDate_quantity_idx" ON "products"("expiryDate", "quantity");
-
--- CreateIndex
-CREATE INDEX "products_quantity_minStock_idx" ON "products"("quantity", "minStock");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "product_variants_sku_key" ON "product_variants"("sku");
@@ -1298,6 +1272,12 @@ ALTER TABLE "employees" ADD CONSTRAINT "employees_shopId_fkey" FOREIGN KEY ("sho
 ALTER TABLE "shops" ADD CONSTRAINT "shops_ownerId_fkey" FOREIGN KEY ("ownerId") REFERENCES "owners"("userId") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "shop_stock" ADD CONSTRAINT "shop_stock_productId_fkey" FOREIGN KEY ("productId") REFERENCES "products"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "shop_stock" ADD CONSTRAINT "shop_stock_shopId_fkey" FOREIGN KEY ("shopId") REFERENCES "shops"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "warehouses" ADD CONSTRAINT "warehouses_shopId_fkey" FOREIGN KEY ("shopId") REFERENCES "shops"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -1316,7 +1296,10 @@ ALTER TABLE "subcategories" ADD CONSTRAINT "subcategories_categoryId_fkey" FOREI
 ALTER TABLE "subcategories" ADD CONSTRAINT "subcategories_shopId_fkey" FOREIGN KEY ("shopId") REFERENCES "shops"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "products" ADD CONSTRAINT "products_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "categories"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "products" ADD CONSTRAINT "products_shopId_fkey" FOREIGN KEY ("shopId") REFERENCES "shops"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "products" ADD CONSTRAINT "products_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "categories"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "products" ADD CONSTRAINT "products_subcategoryId_fkey" FOREIGN KEY ("subcategoryId") REFERENCES "subcategories"("id") ON DELETE SET NULL ON UPDATE CASCADE;

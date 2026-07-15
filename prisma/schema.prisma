@@ -1,7 +1,7 @@
-
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
 }
 
 datasource db {
@@ -143,7 +143,6 @@ model Employee {
   @@index([phone])
   @@index([name])
   @@index([employeeCode])
-
   @@map("employees")
 }
 
@@ -216,9 +215,9 @@ model Shop {
 }
 
 model ShopStock {
-  id          String @id @default(uuid())
-  productId   String
-  shopId      String
+  id        String @id @default(uuid())
+  productId String
+  shopId    String
 
   quantity     Int @default(0)
   reservedQty  Int @default(0)
@@ -237,8 +236,8 @@ model ShopStock {
   updatedAt DateTime @updatedAt
 
   // Relations
-  product   Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
-  shop      Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  shop    Shop    @relation(fields: [shopId], references: [id], onDelete: Cascade)
 
   @@unique([shopId, productId])
   @@index([productId])
@@ -408,9 +407,9 @@ model Product {
   updatedAt DateTime @updatedAt
 
   // Relations
-  shop           Shop            @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  category       Category?       @relation(fields: [categoryId], references: [id])
-  subcategory    Subcategory?    @relation(fields: [subcategoryId], references: [id])
+  shop           Shop             @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  category       Category?        @relation(fields: [categoryId], references: [id])
+  subcategory    Subcategory?     @relation(fields: [subcategoryId], references: [id])
   DamageProduct  DamageProduct[]
   ReturnProduct  ReturnProduct[]
   SaleItem       SaleItem[]

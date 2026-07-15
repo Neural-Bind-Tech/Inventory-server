@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Neuralbind Inventory Server health dashboard."
+    />
+    <title>Server Health | Neuralbind Inventory</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #050c16;
+        --bg-alt: #0a1626;
+        --panel-border: rgba(148, 163, 184, 0.16);
+        --text: #e8f0fd;
+        --muted: #9db1cd;
+        --accent: #5eead4;
+        --success: #22c55e;
+        --warning: #f59e0b;
+        --mono:
+          'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+        --display: 'Space Grotesk', Inter, system-ui, sans-serif;
+        --body: Inter, ui-sans-serif, system-ui, sans-serif;
+        --shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        min-height: 100%;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: var(--body);
+        color: var(--text);
+        background:
+          radial-gradient(
+            circle at 12% -8%,
+            rgba(94, 234, 212, 0.14),
+            transparent 32%
+          ),
+          radial-gradient(
+            circle at 88% 12%,
+            rgba(34, 197, 94, 0.1),
+            transparent 26%
+          ),
+          linear-gradient(165deg, #030711 0%, var(--bg) 46%, var(--bg-alt) 100%);
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        overflow-x: hidden;
+      }
+
+      /* faint blueprint grid drifting behind everything */
+      body::before {
+        content: '';
+        position: fixed;
+        inset: -60px;
+        pointer-events: none;
+        background-image:
+          linear-gradient(rgba(148, 163, 184, 0.05) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(148, 163, 184, 0.05) 1px, transparent 1px);
+        background-size: 48px 48px;
+        animation: grid-drift 60s linear infinite;
+      }
+
+      @keyframes grid-drift {
+        from {
+          transform: translate3d(0, 0, 0);
+        }
+        to {
+          transform: translate3d(48px, 48px, 0);
+        }
+      }
+
+      .shell {
+        position: relative;
+        width: min(100%, 960px);
+        border: 1px solid var(--panel-border);
+        border-radius: 28px;
+        background: linear-gradient(
+          180deg,
+          rgba(13, 23, 41, 0.97),
+          rgba(8, 14, 25, 0.94)
+        );
+        box-shadow:
+          var(--shadow),
+          0 0 0 1px rgba(94, 234, 212, 0.04),
+          0 0 120px rgba(94, 234, 212, 0.1);
+        overflow: hidden;
+      }
+
+      /* sweeping light along the top edge */
+      .conveyor {
+        position: relative;
+        height: 3px;
+        background: rgba(148, 163, 184, 0.1);
+        overflow: hidden;
+      }
+
+      .conveyor::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -30%;
+        height: 100%;
+        width: 30%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          var(--accent),
+          transparent
+        );
+        animation: conveyor-run 3.2s ease-in-out infinite;
+      }
+
+      @keyframes conveyor-run {
+        to {
+          left: 130%;
+        }
+      }
+
+      /* staggered entrance */
+      .rise {
+        opacity: 0;
+        transform: translateY(14px);
+        animation: rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      }
+
+      .rise:nth-of-type(1) {
+        animation-delay: 0.05s;
+      }
+      .rise:nth-of-type(2) {
+        animation-delay: 0.15s;
+      }
+      .rise:nth-of-type(3) {
+        animation-delay: 0.25s;
+      }
+      .rise:nth-of-type(4) {
+        animation-delay: 0.35s;
+      }
+
+      @keyframes rise {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .hero {
+        padding: 44px 44px 36px;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 14px;
+        border-radius: 999px;
+        background: rgba(94, 234, 212, 0.1);
+        border: 1px solid rgba(94, 234, 212, 0.18);
+        color: var(--accent);
+        font-family: var(--mono);
+        font-size: 0.72rem;
+        font-weight: 500;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 22px 0 14px;
+        font-family: var(--display);
+        font-weight: 700;
+        font-size: clamp(1.9rem, 4.4vw, 3.1rem);
+        line-height: 1.08;
+        letter-spacing: -0.03em;
+      }
+
+      h1 .glow {
+        color: var(--accent);
+        text-shadow: 0 0 24px rgba(94, 234, 212, 0.35);
+      }
+
+      .lead {
+        margin: 0;
+        max-width: 62ch;
+        color: var(--muted);
+        font-size: 1.04rem;
+        line-height: 1.75;
+      }
+
+      /* animated heartbeat trace — the health-page signature */
+      .heartbeat {
+        margin-top: 26px;
+        width: 100%;
+        max-width: 560px;
+        height: 44px;
+        display: block;
+      }
+
+      .heartbeat path {
+        fill: none;
+        stroke: var(--success);
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-dasharray: 640;
+        stroke-dashoffset: 640;
+        filter: drop-shadow(0 0 6px rgba(34, 197, 94, 0.5));
+        animation: trace 3.4s ease-in-out infinite;
+      }
+
+      @keyframes trace {
+        0% {
+          stroke-dashoffset: 640;
+          opacity: 0.9;
+        }
+        60% {
+          stroke-dashoffset: 0;
+          opacity: 1;
+        }
+        85% {
+          opacity: 0;
+        }
+        100% {
+          stroke-dashoffset: 640;
+          opacity: 0;
+        }
+      }
+
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+        padding: 36px 44px 40px;
+      }
+
+      .tile {
+        padding: 20px;
+        border-radius: 18px;
+        border: 1px solid rgba(148, 163, 184, 0.12);
+        background: rgba(255, 255, 255, 0.03);
+        transition:
+          transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+          border-color 0.3s ease,
+          box-shadow 0.3s ease;
+      }
+
+      .tile:hover {
+        transform: translateY(-4px);
+        border-color: rgba(94, 234, 212, 0.3);
+        box-shadow: 0 14px 34px rgba(0, 0, 0, 0.35);
+      }
+
+      .tile-label {
+        display: block;
+        margin-bottom: 10px;
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      .tile-value {
+        display: block;
+        font-family: var(--display);
+        font-size: 1.12rem;
+        line-height: 1.45;
+        letter-spacing: -0.01em;
+      }
+
+      .status {
+        color: #c7f9d6;
+      }
+
+      .status-dot {
+        display: inline-block;
+        width: 9px;
+        height: 9px;
+        margin-right: 10px;
+        border-radius: 999px;
+        background: var(--success);
+        vertical-align: middle;
+        animation: pulse 2.2s ease-out infinite;
+      }
+
+      @keyframes pulse {
+        0% {
+          box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.45);
+        }
+        70% {
+          box-shadow: 0 0 0 10px rgba(34, 197, 94, 0);
+        }
+        100% {
+          box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+        }
+      }
+
+      .footer {
+        padding: 0 44px 40px;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        gap: 12px;
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+
+      .footer a {
+        color: var(--text);
+        text-decoration: none;
+        border-bottom: 1px solid rgba(94, 234, 212, 0.35);
+        transition: color 0.2s ease;
+      }
+
+      .footer a:hover {
+        color: var(--accent);
+      }
+
+      .footer .path {
+        font-family: var(--mono);
+        font-size: 0.82rem;
+      }
+
+      @media (max-width: 760px) {
+        .hero,
+        .stats,
+        .footer {
+          padding-left: 24px;
+          padding-right: 24px;
+        }
+
+        .hero {
+          padding-top: 28px;
+          padding-bottom: 24px;
+        }
+
+        .stats {
+          grid-template-columns: 1fr;
+          padding-top: 24px;
+          padding-bottom: 28px;
+        }
+
+        .footer {
+          padding-bottom: 28px;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        body::before,
+        .conveyor::after,
+        .status-dot {
+          animation: none;
+        }
+
+        .heartbeat path {
+          animation: none;
+          stroke-dashoffset: 0;
+          opacity: 1;
+        }
+
+        .rise {
+          animation: none;
+          opacity: 1;
+          transform: none;
+        }
+
+        .tile {
+          transition: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell" aria-label="Server health dashboard">
+      <div class="conveyor" aria-hidden="true"></div>
+
+      <section class="hero">
+        <div class="eyebrow rise">Neuralbind Inventory Server</div>
+
+        <h1 class="rise">Health check <span class="glow">online</span>.</h1>
+
+        <p class="lead rise">
+          The backend is responding, the route is live, and the server is ready
+          to support inventory operations from a single system of record.
+        </p>
+
+        <svg
+          class="heartbeat rise"
+          viewBox="0 0 560 44"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          <path
+            d="M0 22 H150 L165 22 L175 8 L188 36 L198 14 L206 22 H320 L335 22 L345 8 L358 36 L368 14 L376 22 H560"
+          />
+        </svg>
+      </section>
+
+      <section class="stats" aria-label="Live status details">
+        <article class="tile">
+          <span class="tile-label">Server State</span>
+          <span class="tile-value status"
+            ><span class="status-dot"></span>Healthy</span
+          >
+        </article>
+        <article class="tile">
+          <span class="tile-label">Database</span>
+          <span class="tile-value">{{DATABASE_STATUS}}</span>
+        </article>
+        <article class="tile">
+          <span class="tile-label">Checked At</span>
+          <span class="tile-value">{{TIMESTAMP}}</span>
+        </article>
+      </section>
+
+      <div class="footer">
+        <span
+          >Use <a href="/">/</a> for the intro page or explore
+          <a href="/api/v1">/api/v1</a>.</span
+        >
+        <span class="path">server/src/const/health.html</span>
+      </div>
+    </main>
+  </body>
+</html>

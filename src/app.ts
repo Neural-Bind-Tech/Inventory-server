@@ -1,6 +1,7 @@
 import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
+import { readFileSync } from 'node:fs';
 import express, {
   type Application,
   type Request,
@@ -9,12 +10,21 @@ import express, {
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import httpStatus from 'http-status';
+import path from 'node:path';
 import { prisma } from './lib/prisma';
 import globalErrorHandler from './app/middlewares/globalErrorHandler';
 import routes from './app/routes';
 import cron from 'node-cron';
 
 const app: Application = express();
+const introHtml = readFileSync(
+  path.resolve(process.cwd(), 'src/const/intro.html'),
+  'utf8'
+);
+const healthHtml = readFileSync(
+  path.resolve(process.cwd(), 'src/const/health.html'),
+  'utf8'
+);
 
 // Security middleware
 app.use(helmet());
@@ -64,30 +74,37 @@ app.use('/api/', limiter);
 // Health check
 app.get('/health', async (_req: Request, res: Response) => {
   const dbHealth = await prisma.$queryRaw`SELECT 1`;
-  res.status(200).json({
-    status: 'healthy',
-    timestamp: new Date().toISOString(),
-    database: dbHealth ? 'connected' : 'disconnected',
-  });
+  const timestamp = new Date().toISOString();
+  const databaseStatus = dbHealth ? 'Connected' : 'Disconnected';
+
+  res
+    .status(httpStatus.OK)
+    .type('html')
+    .send(
+      healthHtml
+        .replaceAll('{{TIMESTAMP}}', timestamp)
+        .replaceAll('{{DATABASE_STATUS}}', databaseStatus)
+    );
+});
+
+// Root landing page
+app.get('/', (_req: Request, res: Response) => {
+  res.status(httpStatus.OK).type('html').send(introHtml);
 });
 
 // API routes
 app.use('/api/v1', routes);
 
-
 //Cron Job
 cron.schedule('*/5 * * * *', async (): Promise<void> => {
   try {
-    
   } catch (error) {
     console.error('Error executing cron job:', error);
   }
 });
 
-
 // Global error handler (must be last)
 app.use(globalErrorHandler);
-
 
 // 404 handler
 app.use((req: Request, res: Response) => {
