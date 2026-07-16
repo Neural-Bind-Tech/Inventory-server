@@ -14,6 +14,9 @@ const createInventory = async (req: Request) => {
   const payload = req.body as InventoryPayload;
   const file = req.file as IUploadFile;
 
+  console.log(file);
+  
+
   const duplicate = await prisma.inventory.findFirst({
     where: {
       OR: [
@@ -36,6 +39,9 @@ const createInventory = async (req: Request) => {
     const uploadResult = await FileUploadHelper.uploadToCloudinary(file);
     thumbnail = uploadResult?.secure_url || null;
   }
+
+  console.log(thumbnail);
+  
 
   const result = await prisma.inventory.create({
     data: {
